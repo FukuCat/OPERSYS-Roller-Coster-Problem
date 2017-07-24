@@ -21,6 +21,12 @@ public class Data {
     private Semaphore semB;
     private Semaphore semC;
 
+    private Semaphore semPassengerQueue;
+    private Semaphore semCarQueue;
+
+    private SimpleQueue<Integer> carQueue;
+    private SimpleQueue<Integer> passengerQueue;
+
     private Data(){ }
 
     public void initialize(int numPassengers, int numCars, int runType){
@@ -31,6 +37,10 @@ public class Data {
         setSemA(new Semaphore(1));
         setSemB(new Semaphore(0));
         setSemC(new Semaphore(0));
+        setSemPassengerQueue(new Semaphore(1));
+        setSemCarQueue(new Semaphore(1));
+        setCarQueue(new SimpleQueue<>());
+        setPassengerQueue(new SimpleQueue<>());
         setSeatsTaken(0);
     }
 
@@ -104,5 +114,37 @@ public class Data {
 
     public void setSemC(Semaphore semC) {
         this.semC = semC;
+    }
+
+    public SimpleQueue<Integer> getCarQueue() {
+        return carQueue;
+    }
+
+    public void setCarQueue(SimpleQueue<Integer> carQueue) {
+        this.carQueue = carQueue;
+    }
+
+    public SimpleQueue<Integer> getPassengerQueue() {
+        return passengerQueue;
+    }
+
+    public void setPassengerQueue(SimpleQueue<Integer> passengerQueue) {
+        this.passengerQueue = passengerQueue;
+    }
+
+    public Semaphore getSemPassengerQueue() {
+        return semPassengerQueue;
+    }
+
+    public void setSemPassengerQueue(Semaphore semPassengerQueue) {
+        this.semPassengerQueue = semPassengerQueue;
+    }
+
+    public Semaphore getSemCarQueue() {
+        return semCarQueue;
+    }
+
+    public void setSemCarQueue(Semaphore semCarQueue) {
+        this.semCarQueue = semCarQueue;
     }
 }
