@@ -17,9 +17,9 @@ public class Data {
     private int numThreads;
     private int runType;
 
-    private Semaphore semCar;
-    private Semaphore semSeats;
-    private Semaphore semRun;
+    private Semaphore semA;
+    private Semaphore semB;
+    private Semaphore semC;
 
     private Data(){ }
 
@@ -28,9 +28,9 @@ public class Data {
         setMaxPassengers(numPassengers);
         setRunType(runType);
         setNumThreads(numCars + numPassengers);
-        setSemCar(new Semaphore(0));
-        setSemSeats(new Semaphore(1));
-        setSemRun(new Semaphore(0));
+        setSemA(new Semaphore(1));
+        setSemB(new Semaphore(0));
+        setSemC(new Semaphore(0));
         setSeatsTaken(0);
     }
 
@@ -58,12 +58,12 @@ public class Data {
         this.runType = runType;
     }
 
-    public Semaphore getSemCar() {
-        return semCar;
+    public Semaphore getSemA() {
+        return semA;
     }
 
-    public void setSemCar(Semaphore semCar) {
-        this.semCar = semCar;
+    public void setSemA(Semaphore semA) {
+        this.semA = semA;
     }
 
     public int getNumThreads() {
@@ -74,12 +74,12 @@ public class Data {
         this.numThreads = numThreads;
     }
 
-    public Semaphore getSemSeats() {
-        return semSeats;
+    public Semaphore getSemB() {
+        return semB;
     }
 
-    public void setSemSeats(Semaphore semSeats) {
-        this.semSeats = semSeats;
+    public void setSemB(Semaphore semB) {
+        this.semB = semB;
     }
 
     public int getSeatsTaken() {
@@ -98,11 +98,11 @@ public class Data {
         seatsTaken--;
     }
 
-    public Semaphore getSemRun() {
-        return semRun;
+    public Semaphore getSemC() {
+        return semC;
     }
 
-    public void setSemRun(Semaphore semRun) {
-        this.semRun = semRun;
+    public void setSemC(Semaphore semC) {
+        this.semC = semC;
     }
 }

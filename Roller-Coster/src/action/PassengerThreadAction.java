@@ -4,14 +4,28 @@ import model.Data;
 import thread_pool.ThreadAction;
 import utils.Debug;
 
+import java.util.concurrent.Semaphore;
+
 public class PassengerThreadAction implements ThreadAction {
 
     private int type;
     private int id;
 
+    private int maxPassengers;
+    private int maxCars;
+
+    private Semaphore semA;
+    private Semaphore semB;
+    private Semaphore semC;
+
     public PassengerThreadAction(int id, int type){
         setId(id);
         this.type = type;
+        semA = Data.getInstance().getSemA();
+        semB = Data.getInstance().getSemB();
+        semC = Data.getInstance().getSemC();
+        maxPassengers = Data.getInstance().getMaxPassengers();
+        maxCars = Data.getInstance().getMaxCars();
     }
 
     @Override
@@ -25,20 +39,16 @@ public class PassengerThreadAction implements ThreadAction {
     public void runSemaphore(){
         try {
         while(true){
-            Data.getInstance().getSemCar().acquire(1);
-            Data.getInstance().getSemSeats().acquire(1);
             board();
+            semA.acquire(1);
             Data.getInstance().incrementSeatsTaken();
-            if(Data.getInstance().getSeatsTaken() >= Data.getInstance().getMaxPassengers())
-                Data.getInstance().getSemRun().release(Data.getInstance().getMaxCars());
-            Data.getInstance().getSemSeats().release(1);
-
-
-
-            Data.getInstance().getSemSeats().acquire(1);
+            if(Data.getInstance().getSeatsTaken() >= maxCars){
+                Data.getInstance().setSeatsTaken(0);
+                semB.release(maxCars);
+            }
+            semA.release(1);
+            semC.acquire(1);
             unboard();
-            Data.getInstance().decrementSeatsTaken();
-            Data.getInstance().getSemSeats().release(1);
         }
         } catch (InterruptedException e) {
             e.printStackTrace();
