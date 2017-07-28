@@ -34,13 +34,13 @@ public class Data {
         setMaxPassengers(numPassengers);
         setRunType(runType);
         setNumThreads(numCars + numPassengers);
-        setSemA(new Semaphore(0));
-        setSemB(new Semaphore(0));
-        setSemC(new Semaphore(0));
-        setSemD(new Semaphore(0));
+        setSemA(new Semaphore(0, true));
+        setSemB(new Semaphore(0, true));
+        setSemC(new Semaphore(0, true));
+        setSemD(new Semaphore(0, true));
         setSemE(new Semaphore(numCars));
-        setSemM1(new Semaphore(1));
-        setSemM2(new Semaphore(1));
+        setSemM1(new Semaphore(1, true));
+        setSemM2(new Semaphore(1, true));
         setCarCount(0);
         setPassengerCount(0);
     }

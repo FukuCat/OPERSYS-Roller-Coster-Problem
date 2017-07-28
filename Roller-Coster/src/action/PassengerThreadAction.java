@@ -43,6 +43,7 @@ public class PassengerThreadAction implements ThreadAction {
     public void runSemaphore(){
         try {
         while(true){
+            // ensures only N passengers can ride where N = number of cars
             semE.acquire(1);
             board();
             // make all passengers run before releasing permits for CarThreadAction
