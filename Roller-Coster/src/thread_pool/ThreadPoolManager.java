@@ -90,7 +90,7 @@ public class ThreadPoolManager extends Thread implements ThreadPoolNotifier {
 					ThreadAction threadAction = this.pendingActions.poll();
 					PoolThread poolThread = this.inactiveThreads.poll();
 					
-					Debug.log(TAG, "New action executed in thread. Remaining actions: " +this.pendingActions.size());
+					//Debug.log(TAG, "New action executed in thread. Remaining actions: " +this.pendingActions.size());
 					
 					//assign the action and then start the pool thread. Put to active threads pool.
 					poolThread.setThreadAction(threadAction);
@@ -102,7 +102,7 @@ public class ThreadPoolManager extends Thread implements ThreadPoolNotifier {
 				}
 			}
 			else {
-				Debug.log(TAG, "No pending actions found in queue. Available threads: " +this.inactiveThreads.size());
+				//Debug.log(TAG, "No pending actions found in queue. Available threads: " +this.inactiveThreads.size());
 			}
 			
 			//for debugging purposes
@@ -129,10 +129,10 @@ public class ThreadPoolManager extends Thread implements ThreadPoolNotifier {
 			 */
 			//this.inactiveThreads.add(inactiveThread);
 			
-			this.inactiveThreads.add(new PoolThread(threadID, this));
+			//this.inactiveThreads.add(new PoolThread(threadID, this));
 		}
 		else {
-			Debug.log(TAG, threadID + " not found in active pool. Was it removed prematurely?");
+			//Debug.log(TAG, threadID + " not found in active pool. Was it removed prematurely?");
 		}
 	}
 	
