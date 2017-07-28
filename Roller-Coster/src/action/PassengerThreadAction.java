@@ -1,7 +1,6 @@
 package action;
 
 import model.Data;
-import model.SimpleQueue;
 import thread_pool.ThreadAction;
 import utils.Debug;
 
@@ -17,31 +16,24 @@ public class PassengerThreadAction implements ThreadAction {
 
     private Semaphore semA;
     private Semaphore semB;
-    private Semaphore semC;
+    private Semaphore semD;
+    private Semaphore semE;
+    private Semaphore semMutex;
 
-    private Semaphore semPassengerQueue;
-    private Semaphore semCarQueue;
-
-    private SimpleQueue<Integer> carQueue;
-    private SimpleQueue<Integer> passengerQueue;
-
-    public PassengerThreadAction(int id, int type){
+    public PassengerThreadAction(int id, int maxPassengers, int maxCars, int type){
         setId(id);
         this.type = type;
         semA = Data.getInstance().getSemA();
         semB = Data.getInstance().getSemB();
-        semC = Data.getInstance().getSemC();
-        semCarQueue = Data.getInstance().getSemCarQueue();
-        semPassengerQueue = Data.getInstance().getSemPassengerQueue();
-        maxPassengers = Data.getInstance().getMaxPassengers();
-        maxCars = Data.getInstance().getMaxCars();
-        setCarQueue(Data.getInstance().getCarQueue());
-        setPassengerQueue(Data.getInstance().getPassengerQueue());
+        semD = Data.getInstance().getSemD();
+        setSemE(Data.getInstance().getSemE());
+        semMutex = Data.getInstance().getSemM1();
+        this.maxCars = maxCars;
+        this.maxPassengers = maxPassengers;
     }
 
     @Override
     public void execute() {
-        passengerQueue.enqueue(id);
         if(type == 0)
             runSemaphore();
         else
@@ -50,19 +42,26 @@ public class PassengerThreadAction implements ThreadAction {
 
     public void runSemaphore(){
         try {
-        semPassengerQueue.acquire(1);
-        passengerQueue.enqueue(id);
-        semPassengerQueue.release(1);
         while(true){
+            semE.acquire(1);
             board();
-            Data.getInstance().incrementSeatsTaken();
-            if(Data.getInstance().getSeatsTaken() >= maxCars){
-                Data.getInstance().setSeatsTaken(0);
-                semB.release(maxCars);
-            }
+            // make all passengers run before releasing permits for CarThreadAction
             semA.release(1);
-            semC.acquire(1);
+            semA.acquire(maxCars);
+            semMutex.acquire(1);
+                Data.getInstance().incrementPassengerCount();
+                if(Data.getInstance().getPassengerCount() < maxCars)
+                    semA.release(maxCars);
+                else {
+                    Data.getInstance().setPassengerCount(0);
+                    semA.release(1);
+                    semB.release(maxCars);
+                }
+            semMutex.release(1);
+            // wait for all cars to execute run();
+            semD.acquire(1);
             unboard();
+            semE.release(1);
         }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -90,35 +89,11 @@ public class PassengerThreadAction implements ThreadAction {
         this.id = id;
     }
 
-    public SimpleQueue<Integer> getCarQueue() {
-        return carQueue;
+    public Semaphore getSemE() {
+        return semE;
     }
 
-    public void setCarQueue(SimpleQueue<Integer> carQueue) {
-        this.carQueue = carQueue;
-    }
-
-    public SimpleQueue<Integer> getPassengerQueue() {
-        return passengerQueue;
-    }
-
-    public void setPassengerQueue(SimpleQueue<Integer> passengerQueue) {
-        this.passengerQueue = passengerQueue;
-    }
-
-    public Semaphore getSemPassengerQueue() {
-        return semPassengerQueue;
-    }
-
-    public void setSemPassengerQueue(Semaphore semPassengerQueue) {
-        this.semPassengerQueue = semPassengerQueue;
-    }
-
-    public Semaphore getSemCarQueue() {
-        return semCarQueue;
-    }
-
-    public void setSemCarQueue(Semaphore semCarQueue) {
-        this.semCarQueue = semCarQueue;
+    public void setSemE(Semaphore semE) {
+        this.semE = semE;
     }
 }

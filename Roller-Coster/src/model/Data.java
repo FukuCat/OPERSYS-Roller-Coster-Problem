@@ -13,19 +13,19 @@ public class Data {
 
     private int maxPassengers;
     private int maxCars;
-    private int seatsTaken;
+    private int passengerCount;
+    private int carCount;
     private int numThreads;
     private int runType;
 
     private Semaphore semA;
     private Semaphore semB;
     private Semaphore semC;
+    private Semaphore semD;
+    private Semaphore semE;
 
-    private Semaphore semPassengerQueue;
-    private Semaphore semCarQueue;
-
-    private SimpleQueue<Integer> carQueue;
-    private SimpleQueue<Integer> passengerQueue;
+    private Semaphore semM1;
+    private Semaphore semM2;
 
     private Data(){ }
 
@@ -34,14 +34,15 @@ public class Data {
         setMaxPassengers(numPassengers);
         setRunType(runType);
         setNumThreads(numCars + numPassengers);
-        setSemA(new Semaphore(1));
+        setSemA(new Semaphore(0));
         setSemB(new Semaphore(0));
         setSemC(new Semaphore(0));
-        setSemPassengerQueue(new Semaphore(1));
-        setSemCarQueue(new Semaphore(1));
-        setCarQueue(new SimpleQueue<>());
-        setPassengerQueue(new SimpleQueue<>());
-        setSeatsTaken(0);
+        setSemD(new Semaphore(0));
+        setSemE(new Semaphore(numCars));
+        setSemM1(new Semaphore(1));
+        setSemM2(new Semaphore(1));
+        setCarCount(0);
+        setPassengerCount(0);
     }
 
     public int getMaxPassengers() {
@@ -92,20 +93,20 @@ public class Data {
         this.semB = semB;
     }
 
-    public int getSeatsTaken() {
-        return seatsTaken;
+    public int getCarCount() {
+        return carCount;
     }
 
-    public void setSeatsTaken(int seatsTaken) {
-        this.seatsTaken = seatsTaken;
+    public void setCarCount(int carCount) {
+        this.carCount= carCount;
     }
 
-    public void incrementSeatsTaken(){
-        seatsTaken++;
+    public void incrementCarCount(){
+        carCount++;
     }
 
-    public void decrementSeatsTaken(){
-        seatsTaken--;
+    public void decrementCarCount(){
+        carCount--;
     }
 
     public Semaphore getSemC() {
@@ -116,35 +117,50 @@ public class Data {
         this.semC = semC;
     }
 
-    public SimpleQueue<Integer> getCarQueue() {
-        return carQueue;
+    public Semaphore getSemD() {
+        return semD;
     }
 
-    public void setCarQueue(SimpleQueue<Integer> carQueue) {
-        this.carQueue = carQueue;
+    public void setSemD(Semaphore semD) {
+        this.semD = semD;
     }
 
-    public SimpleQueue<Integer> getPassengerQueue() {
-        return passengerQueue;
+    public Semaphore getSemM1() {
+        return semM1;
     }
 
-    public void setPassengerQueue(SimpleQueue<Integer> passengerQueue) {
-        this.passengerQueue = passengerQueue;
+    public void setSemM1(Semaphore semM1) {
+        this.semM1 = semM1;
     }
 
-    public Semaphore getSemPassengerQueue() {
-        return semPassengerQueue;
+    public Semaphore getSemM2() {
+        return semM2;
     }
 
-    public void setSemPassengerQueue(Semaphore semPassengerQueue) {
-        this.semPassengerQueue = semPassengerQueue;
+    public void setSemM2(Semaphore semM2) {
+        this.semM2 = semM2;
     }
 
-    public Semaphore getSemCarQueue() {
-        return semCarQueue;
+    public int getPassengerCount() {
+        return passengerCount;
     }
 
-    public void setSemCarQueue(Semaphore semCarQueue) {
-        this.semCarQueue = semCarQueue;
+    public void setPassengerCount(int passengerCount) {
+        this.passengerCount = passengerCount;
+    }
+    public void incrementPassengerCount(){
+        passengerCount++;
+    }
+
+    public void decrementPassengerCount(){
+        passengerCount--;
+    }
+
+    public Semaphore getSemE() {
+        return semE;
+    }
+
+    public void setSemE(Semaphore semE) {
+        this.semE = semE;
     }
 }
