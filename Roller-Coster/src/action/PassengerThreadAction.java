@@ -62,7 +62,7 @@ public class PassengerThreadAction implements ThreadAction {
         try {
         while(true){
             // ensures only N passengers can ride where N = number of cars
-            semArray[id/maxCars].acquire(1);
+            semArray[id%maxTurns].acquire(1);
             board();
             // make all passengers run before releasing permits for CarThreadAction
             semA.release(1);

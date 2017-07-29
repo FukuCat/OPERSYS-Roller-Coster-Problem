@@ -18,16 +18,17 @@ public class Main {
         //initialize thread pool
         ThreadPoolManager.initialize(data.getNumThreads());
 
+        for(int i = 0; i < data.getMaxCars(); i++) {
+            CarThreadAction threadAction = new CarThreadAction(i, MAX_PASSENGERS, MAX_PASSENGERS / 2,data.getRunType());
+            ThreadPoolManager.getInstance().addThreadAction(threadAction);
+        }
         for(int i = 0; i < data.getMaxPassengers(); i++) {
             PassengerThreadAction threadAction = new PassengerThreadAction(i, MAX_PASSENGERS,MAX_PASSENGERS / 2, data.getRunType());
             ThreadPoolManager.getInstance().addThreadAction(threadAction);
         }
 
-        for(int i = 0; i < data.getMaxCars(); i++) {
-            CarThreadAction threadAction = new CarThreadAction(i, MAX_PASSENGERS, MAX_PASSENGERS / 2,data.getRunType());
-            ThreadPoolManager.getInstance().addThreadAction(threadAction);
-        }
         Debug.log("Main.main", "Running Demo.");
+
         ThreadPoolManager.getInstance().startPoolExecutor();
     }
 
