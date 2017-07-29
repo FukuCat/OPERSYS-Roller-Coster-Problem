@@ -96,6 +96,7 @@ public class PassengerThreadAction implements ThreadAction {
             lockC.unlock();
             board();
             lockA.lock();
+
             condB1.signalAll();
             while (Data.getInstance().getCarCount() < maxCars)
                 condA1.await();
