@@ -5,6 +5,8 @@ import thread_pool.ThreadAction;
 import utils.Debug;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 
 public class PassengerThreadAction implements ThreadAction {
 
@@ -13,12 +15,21 @@ public class PassengerThreadAction implements ThreadAction {
 
     private int maxPassengers;
     private int maxCars;
+    private int maxTurns;
 
     private Semaphore semA;
     private Semaphore semB;
     private Semaphore semD;
     private Semaphore semE;
     private Semaphore semMutex;
+
+    private Semaphore[] semArray;
+
+    private Lock lockA;
+    private Lock lockC;
+    private Condition condA1;
+    private Condition condB1;
+    private Condition condC1;
 
     public PassengerThreadAction(int id, int maxPassengers, int maxCars, int type){
         setId(id);
@@ -30,6 +41,13 @@ public class PassengerThreadAction implements ThreadAction {
         semMutex = Data.getInstance().getSemM1();
         this.maxCars = maxCars;
         this.maxPassengers = maxPassengers;
+        lockA = Data.getInstance().getLockA();
+        lockC = Data.getInstance().getLockC();
+        condA1 = Data.getInstance().getCondA1();
+        condB1 = Data.getInstance().getCondB1();
+        condC1 = Data.getInstance().getCondC1();
+        semArray = Data.getInstance().getSemArray();
+        maxTurns = Data.getInstance().getMaxTurns();
     }
 
     @Override
@@ -44,7 +62,7 @@ public class PassengerThreadAction implements ThreadAction {
         try {
         while(true){
             // ensures only N passengers can ride where N = number of cars
-            semE.acquire(1);
+            semArray[id/maxCars].acquire(1);
             board();
             // make all passengers run before releasing permits for CarThreadAction
             semA.release(1);
@@ -62,16 +80,30 @@ public class PassengerThreadAction implements ThreadAction {
             // wait for all cars to execute run();
             semD.acquire(1);
             unboard();
-            semE.release(1);
         }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
     public void runMonitor(){
+        try{
         while(true){
+            lockC.lock();
+            Data.getInstance().incrementPassengerCount();
+            condC1.signalAll();
+            while (Data.getInstance().getPassengerCount() > maxCars)
+                condC1.await();
+            lockC.unlock();
             board();
+            lockA.lock();
+            condB1.signalAll();
+            while (Data.getInstance().getCarCount() < maxCars)
+                condA1.await();
+            lockA.unlock();
             unboard();
+        }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -96,5 +128,29 @@ public class PassengerThreadAction implements ThreadAction {
 
     public void setSemE(Semaphore semE) {
         this.semE = semE;
+    }
+
+    public Condition getCondA1() {
+        return condA1;
+    }
+
+    public void setCondA1(Condition condA1) {
+        this.condA1 = condA1;
+    }
+
+    public Condition getCondB1() {
+        return condB1;
+    }
+
+    public void setCondB1(Condition condB1) {
+        this.condB1 = condB1;
+    }
+
+    public Condition getCondC1() {
+        return condC1;
+    }
+
+    public void setCondC1(Condition condC1) {
+        this.condC1 = condC1;
     }
 }
