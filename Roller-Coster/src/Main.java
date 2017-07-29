@@ -2,6 +2,7 @@ import action.CarThreadAction;
 import action.PassengerThreadAction;
 import model.Data;
 import thread_pool.ThreadPoolManager;
+import utils.Debug;
 
 public class Main {
 
@@ -9,6 +10,7 @@ public class Main {
 
 
     public static void main(String[] args) {
+        Debug.log("Main.main", "Setting up demo...");
         //setup
         Data data = Data.getInstance();
 
@@ -25,7 +27,7 @@ public class Main {
             CarThreadAction threadAction = new CarThreadAction(i, MAX_PASSENGERS, MAX_PASSENGERS / 2,data.getRunType());
             ThreadPoolManager.getInstance().addThreadAction(threadAction);
         }
-
+        Debug.log("Main.main", "Running Demo.");
         ThreadPoolManager.getInstance().startPoolExecutor();
     }
 
