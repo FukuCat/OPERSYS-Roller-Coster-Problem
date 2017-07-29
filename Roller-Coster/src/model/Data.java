@@ -1,6 +1,9 @@
 package model;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Data {
 
@@ -18,14 +21,26 @@ public class Data {
     private int numThreads;
     private int runType;
 
+    private int maxTurns;
+    private int currTurn;
+
     private Semaphore semA;
     private Semaphore semB;
     private Semaphore semC;
     private Semaphore semD;
     private Semaphore semE;
+    private Semaphore[] semArray;
 
     private Semaphore semM1;
     private Semaphore semM2;
+
+    private Lock lockA;
+    private Lock lockB;
+    private Lock lockC;
+
+    private Condition condA1;
+    private Condition condB1;
+    private Condition condC1;
 
     private Data(){ }
 
@@ -34,15 +49,26 @@ public class Data {
         setMaxPassengers(numPassengers);
         setRunType(runType);
         setNumThreads(numCars + numPassengers);
-        setSemA(new Semaphore(0, true));
-        setSemB(new Semaphore(0, true));
-        setSemC(new Semaphore(0, true));
-        setSemD(new Semaphore(0, true));
+        setSemA(new Semaphore(0));
+        setSemB(new Semaphore(0));
+        setSemC(new Semaphore(0));
+        setSemD(new Semaphore(0));
         setSemE(new Semaphore(numCars));
-        setSemM1(new Semaphore(1, true));
-        setSemM2(new Semaphore(1, true));
+        setSemM1(new Semaphore(1));
+        setSemM2(new Semaphore(1));
+        setLockA(new ReentrantLock());
+        setLockB(new ReentrantLock());
+        setLockC(new ReentrantLock());
+        setCondA1(getLockA().newCondition());
+        setCondB1(getLockB().newCondition());
+        setCondC1(getLockC().newCondition());
         setCarCount(0);
         setPassengerCount(0);
+        setMaxTurns(numPassengers/numCars);
+        setCurrTurn(0);
+        setSemArray(new Semaphore[maxTurns]);
+        for(int i = 0; i < maxTurns; i++)
+            getSemArray()[i] = new Semaphore(0);
     }
 
     public int getMaxPassengers() {
@@ -163,4 +189,78 @@ public class Data {
     public void setSemE(Semaphore semE) {
         this.semE = semE;
     }
+
+    public Lock getLockA() {
+        return lockA;
+    }
+
+    public void setLockA(Lock lockA) {
+        this.lockA = lockA;
+    }
+
+    public Lock getLockB() {
+        return lockB;
+    }
+
+    public void setLockB(Lock lockB) {
+        this.lockB = lockB;
+    }
+
+    public Condition getCondA1() {
+        return condA1;
+    }
+
+    public void setCondA1(Condition condA1) {
+        this.condA1 = condA1;
+    }
+
+    public Condition getCondB1() {
+        return condB1;
+    }
+
+    public void setCondB1(Condition condB1) {
+        this.condB1 = condB1;
+    }
+
+    public Lock getLockC() {
+        return lockC;
+    }
+
+    public void setLockC(Lock lockC) {
+        this.lockC = lockC;
+    }
+
+    public Condition getCondC1() {
+        return condC1;
+    }
+
+    public void setCondC1(Condition condC1) {
+        this.condC1 = condC1;
+    }
+
+    public Semaphore[] getSemArray() {
+        return semArray;
+    }
+
+    public void setSemArray(Semaphore[] semArray) {
+        this.semArray = semArray;
+    }
+
+    public int getMaxTurns() {
+        return maxTurns;
+    }
+
+    public void setMaxTurns(int maxTurns) {
+        this.maxTurns = maxTurns;
+    }
+
+    public int getCurrTurn() {
+        return currTurn;
+    }
+
+    public void setCurrTurn(int currTurn) {
+        this.currTurn = currTurn;
+    }
+
+    public void incrementCurrTurn(){ this.currTurn = (currTurn + 1) % maxTurns; }
 }
