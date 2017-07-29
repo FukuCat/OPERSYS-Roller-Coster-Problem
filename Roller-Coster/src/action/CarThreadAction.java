@@ -15,11 +15,14 @@ public class CarThreadAction implements ThreadAction {
 
     private int maxPassengers;
     private int maxCars;
+    private int maxTurns;
 
     private Semaphore semA;
     private Semaphore semB;
     private Semaphore semC;
     private Semaphore semD;
+
+    private Semaphore[] semArray;
 
     private Semaphore semMutex;
 
@@ -42,6 +45,8 @@ public class CarThreadAction implements ThreadAction {
         condA1 = Data.getInstance().getCondA1();
         condB1 = Data.getInstance().getCondB1();
         condC1 = Data.getInstance().getCondC1();
+        semArray = Data.getInstance().getSemArray();
+        maxTurns = Data.getInstance().getMaxTurns();
     }
 
     @Override
@@ -55,17 +60,20 @@ public class CarThreadAction implements ThreadAction {
     public void runSemaphore(){
         try {
         while(true){
+            semArray[Data.getInstance().getCurrTurn()].release(1);
             load();
             semB.acquire(1);
             run();
-            unload();
             semC.release(1);
             semC.acquire(maxCars);
+            unload();
             semMutex.acquire(1);
                 Data.getInstance().incrementCarCount();
-                if(Data.getInstance().getCarCount() < maxCars)
+                if(Data.getInstance().getCarCount() == 0)
+                    Data.getInstance().incrementCurrTurn();
+                if(Data.getInstance().getCarCount() < maxCars) {
                     semC.release(maxCars);
-                else {
+                } else {
                     Data.getInstance().setCarCount(0);
                     semC.release(1);
                     semD.release(maxCars);

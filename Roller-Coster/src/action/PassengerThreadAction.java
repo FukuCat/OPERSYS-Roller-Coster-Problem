@@ -15,12 +15,15 @@ public class PassengerThreadAction implements ThreadAction {
 
     private int maxPassengers;
     private int maxCars;
+    private int maxTurns;
 
     private Semaphore semA;
     private Semaphore semB;
     private Semaphore semD;
     private Semaphore semE;
     private Semaphore semMutex;
+
+    private Semaphore[] semArray;
 
     private Lock lockA;
     private Lock lockC;
@@ -43,6 +46,8 @@ public class PassengerThreadAction implements ThreadAction {
         condA1 = Data.getInstance().getCondA1();
         condB1 = Data.getInstance().getCondB1();
         condC1 = Data.getInstance().getCondC1();
+        semArray = Data.getInstance().getSemArray();
+        maxTurns = Data.getInstance().getMaxTurns();
     }
 
     @Override
@@ -57,7 +62,7 @@ public class PassengerThreadAction implements ThreadAction {
         try {
         while(true){
             // ensures only N passengers can ride where N = number of cars
-            semE.acquire(1);
+            semArray[id/maxCars].acquire(1);
             board();
             // make all passengers run before releasing permits for CarThreadAction
             semA.release(1);
@@ -75,7 +80,6 @@ public class PassengerThreadAction implements ThreadAction {
             // wait for all cars to execute run();
             semD.acquire(1);
             unboard();
-            semE.release(1);
         }
         } catch (InterruptedException e) {
             e.printStackTrace();

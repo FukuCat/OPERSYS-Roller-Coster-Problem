@@ -12,7 +12,7 @@ public class Main {
         //setup
         Data data = Data.getInstance();
 
-        data.initialize(MAX_PASSENGERS, MAX_PASSENGERS / 2, Data.RUN_MONITOR);
+        data.initialize(MAX_PASSENGERS, MAX_PASSENGERS / 2, Data.RUN_SEMAPHORE);
         //initialize thread pool
         ThreadPoolManager.initialize(data.getNumThreads());
 
