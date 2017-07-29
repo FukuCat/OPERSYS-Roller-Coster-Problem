@@ -1,6 +1,9 @@
 package model;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Data {
 
@@ -27,6 +30,14 @@ public class Data {
     private Semaphore semM1;
     private Semaphore semM2;
 
+    private Lock lockA;
+    private Lock lockB;
+    private Lock lockC;
+
+    private Condition condA1;
+    private Condition condB1;
+    private Condition condC1;
+
     private Data(){ }
 
     public void initialize(int numPassengers, int numCars, int runType){
@@ -41,6 +52,12 @@ public class Data {
         setSemE(new Semaphore(numCars));
         setSemM1(new Semaphore(1, true));
         setSemM2(new Semaphore(1, true));
+        setLockA(new ReentrantLock());
+        setLockB(new ReentrantLock());
+        setLockC(new ReentrantLock());
+        setCondA1(getLockA().newCondition());
+        setCondB1(getLockB().newCondition());
+        setCondC1(getLockC().newCondition());
         setCarCount(0);
         setPassengerCount(0);
     }
@@ -162,5 +179,53 @@ public class Data {
 
     public void setSemE(Semaphore semE) {
         this.semE = semE;
+    }
+
+    public Lock getLockA() {
+        return lockA;
+    }
+
+    public void setLockA(Lock lockA) {
+        this.lockA = lockA;
+    }
+
+    public Lock getLockB() {
+        return lockB;
+    }
+
+    public void setLockB(Lock lockB) {
+        this.lockB = lockB;
+    }
+
+    public Condition getCondA1() {
+        return condA1;
+    }
+
+    public void setCondA1(Condition condA1) {
+        this.condA1 = condA1;
+    }
+
+    public Condition getCondB1() {
+        return condB1;
+    }
+
+    public void setCondB1(Condition condB1) {
+        this.condB1 = condB1;
+    }
+
+    public Lock getLockC() {
+        return lockC;
+    }
+
+    public void setLockC(Lock lockC) {
+        this.lockC = lockC;
+    }
+
+    public Condition getCondC1() {
+        return condC1;
+    }
+
+    public void setCondC1(Condition condC1) {
+        this.condC1 = condC1;
     }
 }

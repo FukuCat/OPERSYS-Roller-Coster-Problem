@@ -5,6 +5,8 @@ import thread_pool.ThreadAction;
 import utils.Debug;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 
 public class CarThreadAction implements ThreadAction {
 
@@ -21,6 +23,10 @@ public class CarThreadAction implements ThreadAction {
 
     private Semaphore semMutex;
 
+    private Lock lockB;
+    private Condition condA1;
+    private Condition condB1;
+    private Condition condC1;
 
     public CarThreadAction(int id, int maxPassengers, int maxCars, int type){
         setId(id);
@@ -32,6 +38,10 @@ public class CarThreadAction implements ThreadAction {
         semMutex = Data.getInstance().getSemM2();
         this.maxCars = maxCars;
         this.maxPassengers = maxPassengers;
+        lockB = Data.getInstance().getLockB();
+        condA1 = Data.getInstance().getCondA1();
+        condB1 = Data.getInstance().getCondB1();
+        condC1 = Data.getInstance().getCondC1();
     }
 
     @Override
@@ -48,6 +58,7 @@ public class CarThreadAction implements ThreadAction {
             load();
             semB.acquire(1);
             run();
+            unload();
             semC.release(1);
             semC.acquire(maxCars);
             semMutex.acquire(1);
@@ -60,17 +71,26 @@ public class CarThreadAction implements ThreadAction {
                     semD.release(maxCars);
                 }
             semMutex.release(1);
-            unload();
         }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
     public void runMonitor(){
+        try {
         while(true){
             load();
+            lockB.lock();
+            while(Data.getInstance().getPassengerCount() < maxCars)
+                condB1.await();
             run();
             unload();
+            Data.getInstance().incrementCarCount();
+            condA1.signalAll();
+            lockB.unlock();
+        }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -92,4 +112,27 @@ public class CarThreadAction implements ThreadAction {
         this.id = id;
     }
 
+    public Condition getCondA1() {
+        return condA1;
+    }
+
+    public void setCondA1(Condition condA1) {
+        this.condA1 = condA1;
+    }
+
+    public Condition getCondB1() {
+        return condB1;
+    }
+
+    public void setCondB1(Condition condB1) {
+        this.condB1 = condB1;
+    }
+
+    public Condition getCondC1() {
+        return condC1;
+    }
+
+    public void setCondC1(Condition condC1) {
+        this.condC1 = condC1;
+    }
 }
