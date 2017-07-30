@@ -1,8 +1,7 @@
 package model;
 
+import java.util.HashMap;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Data {
 
@@ -10,8 +9,8 @@ public class Data {
 
     public static Data getInstance(){ return instance == null ? (instance = new Data()) : instance; }
 
-    public static final int RUN_MONITOR = 1;
-    public static final int RUN_SEMAPHORE = 2;
+    public static final int RUN_MONITOR = 2;
+    public static final int RUN_SEMAPHORE = 1;
 
     private int maxPassengers;
     private int intervalPassengers;
@@ -22,11 +21,8 @@ public class Data {
     private int numThreads;
     private int runType;
 
-    private boolean isDone;
 
-    private boolean isUnloadable;
-    private boolean isRunnable;
-    private boolean isUnboardable;
+    private boolean isDone;
 
     private Semaphore semBoardBarrier;
     private Semaphore semLoadBarrier;
@@ -39,16 +35,14 @@ public class Data {
     private Semaphore semM1;
     private Semaphore semM2;
 
-    private ReentrantLock lock;
-    private Condition conA;
-    private Condition conB;
-    private Condition conC;
-    private Condition conD;
-    private Condition conE;
-    private Condition conBarrierCar;
-    private Condition conBarrierPassenger;
+    // stats
+    private long startTime;
+    private Semaphore semStats;
+    private HashMap<Integer, Integer> passengerRunCountTable;
+    private HashMap<Integer, Long> passengerRunTimeTable;
+    private int starvedThreads;
+    private int deadlockedThreads;
 
-    private SimpleQueue<Integer> passengerQueue;
 
     private Data(){ }
 
@@ -64,6 +58,7 @@ public class Data {
         setSemLoadBarrier(new Semaphore(0));
         setSemRunBarrier(new Semaphore(0));
         setSemUnboardBarrier(new Semaphore(0));
+        setSemStats(new Semaphore(1, true));
         setSemFirstInFirstOut(new Semaphore(numCars, true));
         setSemEndCar(new Semaphore(0));
         setSemEndPassenger(new Semaphore(0));
@@ -71,20 +66,11 @@ public class Data {
         setSemM2(new Semaphore(1));
         setCarCount(0);
         setPassengerCount(0);
-
-        setLock(new ReentrantLock());
-        setConA(getLock().newCondition());
-        setConB(getLock().newCondition());
-        setConC(getLock().newCondition());
-        setConD(getLock().newCondition());
-        setConE(getLock().newCondition());
-        setConBarrierPassenger(getLock().newCondition());
-        setConBarrierCar(getLock().newCondition());
-        setPassengerQueue(new SimpleQueue<>());
-
-        setUnloadable(true);
-        setUnboardable(false);
-        setRunnable(true);
+        setPassengerRunCountTable(new HashMap<>());
+        setPassengerRunTimeTable(new HashMap<Integer, Long>());
+        setStartTime(System.nanoTime());
+        setStarvedThreads(0);
+        setDeadlockedThreads(0);
 
     }
 
@@ -226,53 +212,6 @@ public class Data {
         isDone = done;
     }
 
-    public ReentrantLock getLock() {
-        return lock;
-    }
-
-    public void setLock(ReentrantLock lock) {
-        this.lock = lock;
-    }
-
-    public Condition getConA() {
-        return conA;
-    }
-
-    public void setConA(Condition conA) {
-        this.conA = conA;
-    }
-
-    public Condition getConB() {
-        return conB;
-    }
-
-    public void setConB(Condition conB) {
-        this.conB = conB;
-    }
-
-    public Condition getConC() {
-        return conC;
-    }
-
-    public void setConC(Condition conC) {
-        this.conC = conC;
-    }
-
-    public Condition getConD() {
-        return conD;
-    }
-
-    public void setConD(Condition conD) {
-        this.conD = conD;
-    }
-
-    public SimpleQueue<Integer> getPassengerQueue() {
-        return passengerQueue;
-    }
-
-    public void setPassengerQueue(SimpleQueue<Integer> passengerQueue) {
-        this.passengerQueue = passengerQueue;
-    }
 
     public Semaphore getSemEndCar() {
         return semEndCar;
@@ -297,54 +236,52 @@ public class Data {
     public void setPassengerThreads(int passengerThreads) {
         this.passengerThreads = passengerThreads;
     }
-    public boolean isUnloadable() {
-        return isUnloadable;
+
+    public Semaphore getSemStats() {
+        return semStats;
     }
 
-    public void setUnloadable(boolean unloadable) {
-        isUnloadable = unloadable;
+    public void setSemStats(Semaphore semStats) {
+        this.semStats = semStats;
     }
 
-    public boolean isRunnable() {
-        return isRunnable;
+    public HashMap<Integer, Integer> getPassengerRunCountTable() {
+        return passengerRunCountTable;
     }
 
-    public void setRunnable(boolean runnable) {
-        isRunnable = runnable;
+    public void setPassengerRunCountTable(HashMap<Integer, Integer> passengerRunCountTable) {
+        this.passengerRunCountTable = passengerRunCountTable;
     }
 
-    public void setBoardable(boolean boardable) {
+    public HashMap<Integer, Long> getPassengerRunTimeTable() {
+        return passengerRunTimeTable;
     }
 
-    public boolean isUnboardable() {
-        return isUnboardable;
+    public void setPassengerRunTimeTable(HashMap<Integer, Long> passengerRunTimeTable) {
+        this.passengerRunTimeTable = passengerRunTimeTable;
     }
 
-    public void setUnboardable(boolean unboardable) {
-        isUnboardable = unboardable;
+    public long getStartTime() {
+        return startTime;
     }
 
-    public Condition getConE() {
-        return conE;
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
     }
 
-    public void setConE(Condition conE) {
-        this.conE = conE;
+    public int getStarvedThreads() {
+        return starvedThreads;
     }
 
-    public Condition getConBarrierCar() {
-        return conBarrierCar;
+    public void setStarvedThreads(int starvedThreads) {
+        this.starvedThreads = starvedThreads;
     }
 
-    public void setConBarrierCar(Condition conBarrierCar) {
-        this.conBarrierCar = conBarrierCar;
+    public int getDeadlockedThreads() {
+        return deadlockedThreads;
     }
 
-    public Condition getConBarrierPassenger() {
-        return conBarrierPassenger;
-    }
-
-    public void setConBarrierPassenger(Condition conBarrierPassenger) {
-        this.conBarrierPassenger = conBarrierPassenger;
+    public void setDeadlockedThreads(int deadlockedThreads) {
+        this.deadlockedThreads = deadlockedThreads;
     }
 }
