@@ -14,7 +14,7 @@ public class RollerCoasterMonitor {
 	private int capacity;
 	private int holding;
 
-	public static void main(String[] args) throws Exception {
+	public static void run() {
 		Scanner sc = new Scanner(System.in);
 		System.out.println("[1] - Fixed Capacity, Fixed N\n[2] - Fixed Time");
 		int option = Integer.parseInt(sc.nextLine());
