@@ -1,37 +1,21 @@
-import action.CarThreadAction;
-import action.PassengerThreadAction;
+import action.*;
 import model.Data;
-import thread_pool.ThreadPoolManager;
 import utils.Debug;
+
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Scanner;
 
 public class Main {
 
     private static int MAX_PASSENGERS = 500;
+    private static ArrayList<Thread> pList = new ArrayList<>();
 
 
     public static void main(String[] args) {
-        Debug.log("Main.main", "Setting up demo...");
-        //setup
-        Data data = Data.getInstance();
-
-        //data.initialize(MAX_PASSENGERS, MAX_PASSENGERS / 2, Data.RUN_SEMAPHORE);
-        data.initialize(MAX_PASSENGERS, MAX_PASSENGERS / 2, Data.RUN_MONITOR);
-        //initialize thread pool
-        ThreadPoolManager.initialize(data.getNumThreads());
-
-        for(int i = 0; i < data.getMaxCars(); i++) {
-            CarThreadAction threadAction = new CarThreadAction(i, MAX_PASSENGERS, MAX_PASSENGERS / 2,data.getRunType());
-            ThreadPoolManager.getInstance().addThreadAction(threadAction);
-        }
-        for(int i = 0; i < data.getMaxPassengers(); i++) {
-            PassengerThreadAction threadAction = new PassengerThreadAction(i, MAX_PASSENGERS,MAX_PASSENGERS / 2, data.getRunType());
-            ThreadPoolManager.getInstance().addThreadAction(threadAction);
-        }
-
-        Debug.log("Main.main", "Running Demo.");
-
-        ThreadPoolManager.getInstance().startPoolExecutor();
+        new Demo().start();
     }
+
 
 
 }
