@@ -1,20 +1,33 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/**
+ *
+ * @author Jonah
+ */
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.Scanner;
 
 public class RollerCoasterMonitor {
 	private static RollerCoasterMonitor instance = null;
+	private static int starvation = 0;
 	private ReentrantLock rel;
 	private Condition loadQueue;
 	private Condition unloadQueue;
 	private Condition carEmpty;
 	private Condition carFull;
+	private Condition waitQueue;
 	private boolean loading;
 	private boolean unloading;
 	private int capacity;
 	private int holding;
+	private int waitCtr;
 
-	public static void run() {
+	public static void run(){
 		Scanner sc = new Scanner(System.in);
 		System.out.println("[1] - Fixed Capacity, Fixed N\n[2] - Fixed Time");
 		int option = Integer.parseInt(sc.nextLine());
@@ -61,7 +74,7 @@ public class RollerCoasterMonitor {
 	}
 
 	private RollerCoasterMonitor(int capacity) {
-		rel = new ReentrantLock();
+		rel = new ReentrantLock(true);
 		loadQueue = rel.newCondition();
 		unloadQueue = rel.newCondition();
 		carEmpty = rel.newCondition();
@@ -69,6 +82,7 @@ public class RollerCoasterMonitor {
 		loading = unloading = false;
 		this.capacity = capacity;
 		holding = 0;
+		waitQueue = rel.newCondition();
 	}
 
 	public static RollerCoasterMonitor instance() {
@@ -85,25 +99,41 @@ public class RollerCoasterMonitor {
 		return instance;
 	}
 
-	public void tryBoard() {
+	public void tryBoard(Passenger p) {
 		rel.lock();
 
 		try {
+			System.out.println("Try boarding passenger " + p.passNo);
+
 			//if not loading
 			if(!loading) {
 				System.out.println("Not loading. Waiting for load");
 				loadQueue.await();
 			}
 
+			while(waitCtr>0) {
+				Thread.yield();
+				rel.unlock();
+				rel.lock();
+			}
+
 			//while there's no space
 			while(holding == capacity) {
-				System.out.println("No space.");
-				loadQueue.await();
+				boolean prev = p.starved();
+				p.addWait();
+				System.out.println("No space for passenger " + p.passNo + ". Waited " + p.waitCtr() + " times.");
+				waitCtr++;
+				waitQueue.await();
+				waitCtr--;
+				if( p.starved() ^ prev) {
+					starvation++;
+				}
 			}
 
 			//update holding to account for new passenger
 			holding++;
-			System.out.println("Monitor board. On Coaster: " + holding);
+			System.out.println("Passenger " + p.passNo + " board. On Coaster: " + holding);
+			p.resetWait();
 
 			//if full
 			if(holding == capacity) {
@@ -111,18 +141,20 @@ public class RollerCoasterMonitor {
 				System.out.println("Car Full. Signalling Car");
 				carFull.signal();
 			}
-	
+
 		} catch(Exception e) {
 			System.out.println(e.toString());
 		} finally{
 			rel.unlock();
+			Thread.yield();
 		}
 	}
 
-	public void tryUnboard() {
+	public void tryUnboard(Passenger p) {
 		rel.lock();
 
 		try {
+			System.out.println("Try unboarding passenger " + p.passNo);
 			//if not unloading
 			if(!unloading) {
 				System.out.println("Not unloading. Waiting for load");
@@ -143,6 +175,7 @@ public class RollerCoasterMonitor {
 			System.out.println(e.toString());
 		} finally{
 			rel.unlock();
+			Thread.yield();
 		}
 	}
 
@@ -155,13 +188,16 @@ public class RollerCoasterMonitor {
 				System.out.println("Car not empty. Waiting...");
 				carEmpty.await();
 			}
+			System.out.println("Starvation Count: " + starvation);
 			System.out.println("------------------------------------COASTER RUN---------------------------------");
 			System.out.println("LOADING");
 			loading = true;
+			loadQueue.signalAll();
 			for(int i = 0; i < capacity; i++) {
-				loadQueue.signal();
+				System.out.println("SIGNAL LOAD QUEUE");
+				waitQueue.signal();
 			}
-		
+
 			//wait for car to be full
 			System.out.println("Wait for car to be full");
 			carFull.await();
@@ -169,6 +205,7 @@ public class RollerCoasterMonitor {
 			System.out.println(e.toString());
 		} finally{
 			rel.unlock();
+			Thread.yield();
 		}
 	}
 
@@ -184,6 +221,7 @@ public class RollerCoasterMonitor {
 			System.out.println(e.toString());
 		} finally{
 			rel.unlock();
+			Thread.yield();
 		}
 	}
 }
@@ -209,9 +247,9 @@ class RollerCoaster implements Runnable {
 		rcm.startUnload();
 		// System.out.println("UNLOADING");
 	}
-	
-	public void board() {
-		rcm.tryBoard();
+
+	public void board(Passenger p) {
+		rcm.tryBoard(p);
 		if(holding < capacity)
 			holding++;
 		// System.out.println("BOARDED! ON COASTER: " + holding);
@@ -221,11 +259,11 @@ class RollerCoaster implements Runnable {
 		System.out.println("COASTER RUNNING!");
 	}
 
-	public void unboard() {
-		rcm.tryUnboard();
+	public void unboard(Passenger p) {
+		rcm.tryUnboard(p);
 		if(holding > 0)
 			holding--;
-		// System.out.println("UNBOARDED! ON COASTER: " + holding);	
+		// System.out.println("UNBOARDED! ON COASTER: " + holding);
 	}
 
 	public void kill() {
@@ -245,13 +283,36 @@ class RollerCoaster implements Runnable {
 class Passenger implements Runnable {
 	private RollerCoasterMonitor rcm;
 	private RollerCoaster rc;
-	private int passNo;
+	public int passNo;
 	private boolean running;
+	private int waitCtr;
+	private boolean starved;
 
 	public Passenger(int passNo, RollerCoaster rc) {
 		this.passNo = passNo;
 		this.rc = rc;
 		rcm = RollerCoasterMonitor.instance();
+		waitCtr = 0;
+		starved = false;
+	}
+
+	public int waitCtr() {
+		return waitCtr;
+	}
+
+	public boolean starved() {
+		if(!starved && waitCtr > 1) {
+			starved = true;
+		}
+		return starved;
+	}
+
+	public void addWait() {
+		waitCtr++;
+	}
+
+	public void resetWait() {
+		waitCtr = 0;
 	}
 
 	public void kill() {
@@ -261,10 +322,8 @@ class Passenger implements Runnable {
 	public void run() {
 		running = true;
 		while(running) {
-			System.out.println("Try Boarding Passenger " + passNo);
-			rc.board();
-			System.out.println("Try Unboarding Passenger " + passNo);
-			rc.unboard();
+			rc.board(this);
+			rc.unboard(this);
 		}
 	}
 }

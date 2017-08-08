@@ -160,13 +160,8 @@ public class Demo extends Thread{
                     try {
                         Thread.sleep(1000);
                         totalStarved += detectDeadlock();
-                        semLog.acquire(1);
-                        System.err.println("Number of starved threads: " + totalStarved);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
-                    }finally {
-
-                        semLog.release(1);
                     }
                 }
                 for(int i = 0; i < pList.size(); i++)
@@ -226,7 +221,6 @@ public class Demo extends Thread{
     private static int detectDeadlock() {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long[] deadlockThreadIds = threadBean.findMonitorDeadlockedThreads();
-        int deadlockedThreads = deadlockThreadIds != null? deadlockThreadIds.length : 0;
-        return deadlockedThreads;
+        return deadlockThreadIds != null? deadlockThreadIds.length : 0;
     }
 }
