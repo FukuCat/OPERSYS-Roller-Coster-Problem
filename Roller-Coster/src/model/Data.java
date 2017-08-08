@@ -35,13 +35,7 @@ public class Data {
     private Semaphore semM1;
     private Semaphore semM2;
 
-    // stats
-    private long startTime;
-    private Semaphore semStats;
-    private HashMap<Integer, Integer> passengerRunCountTable;
-    private HashMap<Integer, Long> passengerRunTimeTable;
-    private int starvedThreads;
-    private int deadlockedThreads;
+    private Semaphore semLog;
 
 
     private Data(){ }
@@ -58,7 +52,6 @@ public class Data {
         setSemLoadBarrier(new Semaphore(0));
         setSemRunBarrier(new Semaphore(0));
         setSemUnboardBarrier(new Semaphore(0));
-        setSemStats(new Semaphore(1, true));
         setSemFirstInFirstOut(new Semaphore(numCars, true));
         setSemEndCar(new Semaphore(0));
         setSemEndPassenger(new Semaphore(0));
@@ -66,12 +59,7 @@ public class Data {
         setSemM2(new Semaphore(1));
         setCarCount(0);
         setPassengerCount(0);
-        setPassengerRunCountTable(new HashMap<>());
-        setPassengerRunTimeTable(new HashMap<Integer, Long>());
-        setStartTime(System.nanoTime());
-        setStarvedThreads(0);
-        setDeadlockedThreads(0);
-
+        setSemLog(new Semaphore(1,true));
     }
 
     public int getMaxPassengers() {
@@ -237,51 +225,11 @@ public class Data {
         this.passengerThreads = passengerThreads;
     }
 
-    public Semaphore getSemStats() {
-        return semStats;
+    public Semaphore getSemLog() {
+        return semLog;
     }
 
-    public void setSemStats(Semaphore semStats) {
-        this.semStats = semStats;
-    }
-
-    public HashMap<Integer, Integer> getPassengerRunCountTable() {
-        return passengerRunCountTable;
-    }
-
-    public void setPassengerRunCountTable(HashMap<Integer, Integer> passengerRunCountTable) {
-        this.passengerRunCountTable = passengerRunCountTable;
-    }
-
-    public HashMap<Integer, Long> getPassengerRunTimeTable() {
-        return passengerRunTimeTable;
-    }
-
-    public void setPassengerRunTimeTable(HashMap<Integer, Long> passengerRunTimeTable) {
-        this.passengerRunTimeTable = passengerRunTimeTable;
-    }
-
-    public long getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(long startTime) {
-        this.startTime = startTime;
-    }
-
-    public int getStarvedThreads() {
-        return starvedThreads;
-    }
-
-    public void setStarvedThreads(int starvedThreads) {
-        this.starvedThreads = starvedThreads;
-    }
-
-    public int getDeadlockedThreads() {
-        return deadlockedThreads;
-    }
-
-    public void setDeadlockedThreads(int deadlockedThreads) {
-        this.deadlockedThreads = deadlockedThreads;
+    public void setSemLog(Semaphore semLog) {
+        this.semLog = semLog;
     }
 }

@@ -3,13 +3,18 @@ import action.DemoThread;
 import action.PassengerSemaphore;
 import model.Data;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.Semaphore;
 
 public class Demo extends Thread{
 
     private static int MAX_PASSENGERS = 500;
     private static ArrayList<Thread> pList = new ArrayList<>();
+    private static int totalStarved = 0;
+    private static Semaphore semLog;
 
     @Override
     public void run() {
@@ -75,9 +80,18 @@ public class Demo extends Thread{
                     System.out.print("Seats: ");
                     seats = Integer.parseInt(sc.nextLine());
                     System.out.println();
-                    if(seats <= 0 && seats/2 > passengers)
+                    if(seats <= 0 || seats > passengers/2)
                         System.out.println("Invalid Input!\n");
-                }while(seats <= 0 && seats/2 > passengers);
+                }while(seats <= 0 || seats > passengers/2);
+                // duration
+                do{
+                    System.out.println("Duration is how many seconds the demo will run.");
+                    System.out.print("Duration: ");
+                    duration = Integer.parseInt(sc.nextLine());
+                    System.out.println();
+                    if(duration <= 0)
+                        System.out.println("Invalid Input!\n");
+                }while(duration <= 0);
                 break;
             case 2:
                 // passengers
@@ -123,6 +137,7 @@ public class Demo extends Thread{
         // create car threads
         Data.getInstance().initialize(passengers, seats, runType);
         Data data = Data.getInstance();
+        semLog = data.getSemLog();
         for(int i = 0; i < data.getMaxCars(); i++) {
             Thread t = null;
             t = new CarSemaphore(i);
@@ -134,11 +149,38 @@ public class Demo extends Thread{
         // create passenger threads
         switch (option){
             case 1: // add passengers once
+                time = System.nanoTime();
                 for(int i = 0; i < passengers; i++) {
                     Thread t = null;
                     t = new PassengerSemaphore(i);
                     t.start();
                     pList.add(t);
+                }
+                while((double)(System.nanoTime() - time)/ 1000000000.0 < (double)duration){
+                    try {
+                        Thread.sleep(1000);
+                        totalStarved += detectDeadlock();
+                        semLog.acquire(1);
+                        System.err.println("Number of starved threads: " + totalStarved);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }finally {
+
+                        semLog.release(1);
+                    }
+                }
+                for(int i = 0; i < pList.size(); i++)
+                    ((DemoThread)pList.get(i)).quit();
+                try {
+                    semLog.acquire(1);
+                    System.err.println("Number of starved threads: " + totalStarved);
+                    System.err.println("Number of deadlocked threads: " + detectDeadlock());
+                    System.err.println("Demo End!");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }finally {
+
+                    semLog.release(1);
                 }
                 break;
             case 2: // add passengers on interval
@@ -146,34 +188,45 @@ public class Demo extends Thread{
                 int total = 0;
                 while((double)(System.nanoTime() - time)/ 1000000000.0 < (double)duration){
                     total+=passengers;
-                    System.out.println("[Time: "+(System.nanoTime() - (double)time)/ 1000000000.0+"]: Adding "+passengers+" passengers" +
-                            "\n[Time: "+((double)time - System.nanoTime())/ 1000000000.0+"]: Total "+total+" passengers");
+                    //System.out.println("[Time: "+(System.nanoTime() - (double)time)/ 1000000000.0+"]: Adding "+passengers+" passengers" +
+                    //       "\n[Time: "+((double)time - System.nanoTime())/ 1000000000.0+"]: Total "+total+" passengers");
                     for(int i = 0; i < passengers; i++) {
                         Thread t = null;
                         t = new PassengerSemaphore(i);
                         t.start();
                         pList.add(t);
-                        try {
-                            data.getSemStats().acquire(1);
-                            data.setPassengerCount(passengers + Data.getInstance().getPassengerCount());
-                            data.getSemStats().release(1);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                     }
                     // wait a few seconds and add again
                     try {
                         Thread.sleep(interval * 1000);
+                        totalStarved += detectDeadlock();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
                 for(int i = 0; i < pList.size(); i++)
                     ((DemoThread)pList.get(i)).quit();
-                System.out.println("Demo End!");
+                try {
+                    semLog.acquire(1);
+                    System.err.println("Number of starved threads: " + totalStarved);
+                    System.err.println("Number of deadlocked threads: " + detectDeadlock());
+                    System.err.println("Demo End!");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+
+                    semLog.release(1);
+                }
                 break;
         }
 
 
+    }
+
+    private static int detectDeadlock() {
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+        long[] deadlockThreadIds = threadBean.findMonitorDeadlockedThreads();
+        int deadlockedThreads = deadlockThreadIds != null? deadlockThreadIds.length : 0;
+        return deadlockedThreads;
     }
 }

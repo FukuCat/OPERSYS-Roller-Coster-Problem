@@ -1,0 +1,1 @@
+Simply run the main function and follow the steps in console to run
