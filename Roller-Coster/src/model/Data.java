@@ -1,6 +1,5 @@
 package model;
 
-import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 
 public class Data {
@@ -36,7 +35,9 @@ public class Data {
     private Semaphore semM2;
 
     private Semaphore semLog;
-
+    private int timesRan;
+    private int starvedThreads;
+    private Semaphore semStarve;
 
     private Data(){ }
 
@@ -60,7 +61,13 @@ public class Data {
         setCarCount(0);
         setPassengerCount(0);
         setSemLog(new Semaphore(1,true));
+        setSemStarve(new Semaphore(1, true));
+        setTimesRan(0);
+        setStarvedThreads(0);
     }
+
+    public void incrementTimesRan(){ timesRan++; }
+    public void incrementStarvedThreads(){ starvedThreads++; }
 
     public int getMaxPassengers() {
         return maxPassengers;
@@ -231,5 +238,29 @@ public class Data {
 
     public void setSemLog(Semaphore semLog) {
         this.semLog = semLog;
+    }
+
+    public int getTimesRan() {
+        return timesRan;
+    }
+
+    public void setTimesRan(int timesRan) {
+        this.timesRan = timesRan;
+    }
+
+    public int getStarvedThreads() {
+        return starvedThreads;
+    }
+
+    public void setStarvedThreads(int starvedThreads) {
+        this.starvedThreads = starvedThreads;
+    }
+
+    public Semaphore getSemStarve() {
+        return semStarve;
+    }
+
+    public void setSemStarve(Semaphore semStarve) {
+        this.semStarve = semStarve;
     }
 }

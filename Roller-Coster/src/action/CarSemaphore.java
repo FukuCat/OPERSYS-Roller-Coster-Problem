@@ -20,6 +20,8 @@ public class CarSemaphore extends Thread implements DemoThread{
     private Semaphore semM2;
     private Semaphore semLog;
 
+    private Semaphore semStarve;
+
     public CarSemaphore(int carId){
         setCarId(carId);
         semLoadBarrier = Data.getInstance().getSemLoadBarrier();
@@ -29,6 +31,7 @@ public class CarSemaphore extends Thread implements DemoThread{
         semM2 = Data.getInstance().getSemM2();
         this.maxCars = Data.getInstance().getMaxCars();
         semLog = Data.getInstance().getSemLog();
+        semStarve = Data.getInstance().getSemStarve();
     }
 
     @Override
@@ -55,6 +58,9 @@ public class CarSemaphore extends Thread implements DemoThread{
 
 
                 // reset and goto next loop
+                semStarve.acquire(1);
+                Data.getInstance().incrementTimesRan();
+                semStarve.release(1);
                 Data.getInstance().setCarCount(0);
                 semEndCar.release(maxCars);
                 semUnboardBarrier.release(maxCars);

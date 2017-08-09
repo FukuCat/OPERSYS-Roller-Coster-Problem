@@ -21,6 +21,10 @@ public class PassengerSemaphore extends Thread implements DemoThread{
 
     private Semaphore semLog;
 
+    private int timesCompleted;
+    private int lastCarTimes;
+
+    private Semaphore semStarve;
 
     public PassengerSemaphore(int passengerId){
         setPassengerId(passengerId);
@@ -32,6 +36,9 @@ public class PassengerSemaphore extends Thread implements DemoThread{
         semEndPassenger = Data.getInstance().getSemEndPassenger();
         this.maxCars = Data.getInstance().getMaxCars();
         semLog = Data.getInstance().getSemLog();
+        timesCompleted = 0;
+        lastCarTimes = 1;
+        semStarve = Data.getInstance().getSemStarve();
     }
 
     @Override
@@ -66,6 +73,14 @@ public class PassengerSemaphore extends Thread implements DemoThread{
             semEndPassenger.acquire(1);
             semFirstInFirstOut.release(1);
             // for checking stats
+            semStarve.acquire(1);
+            timesCompleted++;
+            int currCarTimes = Data.getInstance().getTimesRan();
+            if( currCarTimes < lastCarTimes + 1 ){
+                Data.getInstance().incrementStarvedThreads();
+                lastCarTimes = currCarTimes;
+            }
+            semStarve.release(1);
             //stats();
         }
         } catch (InterruptedException e) {

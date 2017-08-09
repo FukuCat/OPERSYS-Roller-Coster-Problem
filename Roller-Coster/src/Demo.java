@@ -15,6 +15,7 @@ public class Demo extends Thread{
     private static ArrayList<Thread> pList = new ArrayList<>();
     private static int totalStarved = 0;
     private static Semaphore semLog;
+    private static Semaphore semStarve;
 
     @Override
     public void run() {
@@ -138,6 +139,7 @@ public class Demo extends Thread{
         Data.getInstance().initialize(passengers, seats, runType);
         Data data = Data.getInstance();
         semLog = data.getSemLog();
+        semStarve = data.getSemStarve();
         for(int i = 0; i < data.getMaxCars(); i++) {
             Thread t = null;
             t = new CarSemaphore(i);
@@ -168,6 +170,8 @@ public class Demo extends Thread{
                     ((DemoThread)pList.get(i)).quit();
                 try {
                     semLog.acquire(1);
+                    Thread.sleep(7 * 1000);
+                    System.err.println("Number of passenger threads: " + passengers);
                     System.err.println("Number of starved threads: " + totalStarved);
                     System.err.println("Number of deadlocked threads: " + detectDeadlock());
                     System.err.println("Demo End!");
@@ -182,10 +186,10 @@ public class Demo extends Thread{
                 time = System.nanoTime();
                 int total = 0;
                 while((double)(System.nanoTime() - time)/ 1000000000.0 < (double)duration){
-                    total+=passengers;
                     //System.out.println("[Time: "+(System.nanoTime() - (double)time)/ 1000000000.0+"]: Adding "+passengers+" passengers" +
                     //       "\n[Time: "+((double)time - System.nanoTime())/ 1000000000.0+"]: Total "+total+" passengers");
                     for(int i = 0; i < passengers; i++) {
+                        total++;
                         Thread t = null;
                         t = new PassengerSemaphore(i);
                         t.start();
@@ -202,7 +206,11 @@ public class Demo extends Thread{
                 for(int i = 0; i < pList.size(); i++)
                     ((DemoThread)pList.get(i)).quit();
                 try {
+                    Thread.sleep(7 * 1000);
                     semLog.acquire(1);
+                    semStarve.acquire(1);
+                    System.err.println("Number of passenger threads: " + data.getStarvedThreads());
+                    semStarve.release(1);
                     System.err.println("Number of starved threads: " + totalStarved);
                     System.err.println("Number of deadlocked threads: " + detectDeadlock());
                     System.err.println("Demo End!");

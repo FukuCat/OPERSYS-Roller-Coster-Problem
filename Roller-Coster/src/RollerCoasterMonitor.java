@@ -188,8 +188,8 @@ public class RollerCoasterMonitor {
 				System.out.println("Car not empty. Waiting...");
 				carEmpty.await();
 			}
-			System.out.println("Starvation Count: " + starvation);
-			System.out.println("------------------------------------COASTER RUN---------------------------------");
+			System.err.println("Starvation Count: " + starvation);
+			System.err.println("------------------------------------COASTER RUN---------------------------------");
 			System.out.println("LOADING");
 			loading = true;
 			loadQueue.signalAll();
